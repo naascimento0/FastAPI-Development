@@ -3,19 +3,21 @@ from .. import models, schemas, utils, oauth2
 from sqlalchemy.orm import Session
 from ..database import get_db
 from typing import List, Optional
+from sqlalchemy import func
 
 router = APIRouter(prefix="/posts", tags=['Posts'])
 
-@router.get("/", response_model=List[schemas.PostResponse])
+@router.get("/", response_model=List[schemas.PostWithVotes])
 def get_posts(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user),
               limit: int = 10, skip: int = 0, search: Optional[str] = ""):
     # cursor.execute("""SELECT * FROM posts """)
     # posts = cursor.fetchall()
-    print(search)
     if limit < 0 or skip < 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Limit and skip should be equal or greater than 0")
-    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all() # posts are now public 
+    #posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all() # posts are now public 
     #posts = db.query(models.Post).filter(models.Post.owner_id == current_user.id).all() # posts are now private 
+    posts = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True).group_by(
+        models.Post.id).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     return posts
 
 @router.post("/", status_code = status.HTTP_201_CREATED, response_model=schemas.PostResponse)
@@ -30,18 +32,21 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), curren
     db.refresh(new_post)
     return new_post
 
-@router.get("/{id}", response_model=schemas.PostResponse)
+@router.get("/{id}", response_model=schemas.PostWithVotes)
 def get_post(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     # cursor.execute("""SELECT * FROM posts WHERE id = %s""", (id,))
     # post = cursor.fetchone()
-    post = db.query(models.Post).filter(models.Post.id == id).first()
-    if not post:
+    post_tuple = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True).group_by(models.Post.id).filter(models.Post.id == id).first()
+    #post = db.query(models.Post).filter(models.Post.id == id).first()
+
+    if not post_tuple:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
                              detail = f"post with id: {id} was not found")
     # making posts private
+    post, _ = post_tuple
     if post.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform requested action")
-    return post
+    return post_tuple
 
 @router.delete("/{id}", status_code = status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
