@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from datetime import datetime
 from typing import Optional
 
@@ -16,8 +16,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     created_at: datetime
         
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PostResponse(PostBase):
     id: int
@@ -25,8 +24,7 @@ class PostResponse(PostBase):
     owner_id: int
     owner: UserResponse # pydantic model
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PostWithVotes(BaseModel):
     Post: PostResponse
