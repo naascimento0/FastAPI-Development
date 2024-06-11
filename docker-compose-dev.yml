@@ -19,7 +19,7 @@ services:
       - SECRET_KEY=3de4c95a32928da15d97fa58144e43f07e610f1e440d490d8ba8a458a3be3bbb
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=60
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: /usr/src/app/entrypoint.sh
   postgres:
     image: postgres
     environment:

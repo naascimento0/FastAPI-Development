@@ -1,3 +1,3 @@
-pip install -r requirements.txt
-
-fastapi dev app/main.py
+TO RUN:
+    chmod +x entrypoint.sh
+    docker-compose -f docker-compose-dev.yml up -d
