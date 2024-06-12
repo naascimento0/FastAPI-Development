@@ -52,6 +52,17 @@ def test_user(client):
     new_user['password'] = user_data['password']
     return new_user
 
+@pytest.fixture()
+def test_user2(client): # speficic to "test_update_other_user_post"
+    user_data = {"email": "john@gmail.com", "password": "john"}
+    response = client.post("/users/", json=user_data)
+    assert response.status_code == 201
+
+    new_user = response.json()
+    new_user['password'] = user_data['password']
+    return new_user
+
+
 @pytest.fixture
 def token(test_user):
     return create_acess_token({"user_id": test_user['id']})
@@ -65,7 +76,7 @@ def authorized_client(client, token):
     return client
 
 @pytest.fixture
-def test_posts(test_user, session):
+def test_posts(test_user, session, test_user2):
     posts_data = [{
         "title": "bitcoin in bull market",
         "content": "its increasing its value",
@@ -78,6 +89,10 @@ def test_posts(test_user, session):
         "title": "gas",
         "content": "very expensive",
         "owner_id": test_user['id']
+    }, {
+        "title": "debt",
+        "content": "increasing every year",
+        "owner_id": test_user2['id']
     }]
 
     def create_post_model(post):
