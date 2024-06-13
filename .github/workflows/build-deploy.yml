@@ -3,7 +3,16 @@ name: Build and Deploy Code
 on: [push, pull_request]
 
 jobs:
-  job1: 
+  job1:
+    env: 
+      DATABASE_HOSTNAME=localhost
+      DATABASE_PORT=5432
+      DATABASE_PASSWORD=1104
+      DATABASE_NAME=fastAPI
+      DATABASE_USERNAME=postgres
+      SECRET_KEY=3de4c95a32928da15d97fa58144e43f07e610f1e440d490d8ba8a458a3be3bbb
+      ALGORITHM=HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES=60
     runs-on: ubuntu-latest
     steps:
       - name: pulling git repo
@@ -20,7 +29,5 @@ jobs:
         run:
           pip install pytest
           pytest
-      
-
 
       
